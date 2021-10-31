@@ -2,7 +2,8 @@ const { Telegraf, Markup } = require('telegraf');
 require('dotenv').config();
 const Web3 = require('web3');
 const web3 = new Web3('https://bsc-dataseed1.binance.org:443');
-const axios = require('axios')
+const axios = require('axios');
+const { performance } = require('perf_hooks');
 
 //insert your bot token here
 const bot = new Telegraf(process.env.BOT_TOKEN)
@@ -17,15 +18,30 @@ bot.command('createwallet', (ctx) => {
         `*Address* : ${backTick}${resultWallet.address}${backTick}\n*Private Key * : ${backTick}${resultWallet.privateKey}${backTick}`, { parse_mode: "MarkdownV2" })
 })
 
+//get price token
 bot.command('token', async (ctx) => {
-    // await ctx.reply('Please enter token address (0x...)')
-    // await ctx.reply('Cancel', Markup.keyboard([
-    //     ['🚫 Cancel']
-    // ]).oneTime().resize()
-    // )
+    let startPerf = performance.now();
     const resultCtx = await ctx.update.message.text.split(' ');
     if (resultCtx[1] !== undefined) {
         if (resultCtx[1].substr(0, 2) === '0x' && resultCtx[1].length == 42) {
+            const config = {
+                method: 'GET',
+                url: `https://api.pancakeswap.info/api/v2/tokens/${resultCtx[1]}`
+            }
+            axios(config)
+                .then(async response => {
+                    console.log(response.data);
+                    await ctx.reply(`${response.data.data.name}  (${response.data.data.symbol})  \nPrice : $${response.data.data.price} \nPrice in BNB : ${response.data.data.price_BNB} bnb`);
+
+                    let endPerf = performance.now();
+                    await ctx.reply(Math.floor(endPerf - startPerf) / 1000 + 's')
+                })
+                .catch(error => {
+                    console.log(error.message)
+                    if (error.message === 'Request failed with status code 404') {
+                        ctx.reply('*Error* token not found in pancakeswap', { parse_mode: 'MarkdownV2' })
+                    }
+                })
 
         } else {
             ctx.reply('Please insert valid address')
@@ -36,8 +52,6 @@ bot.command('token', async (ctx) => {
     }
     console.log(resultCtx)
 })
-
-//get price token
 
 
 //start bot
