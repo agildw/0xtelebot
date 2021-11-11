@@ -3,11 +3,18 @@ require('dotenv').config();
 const Web3 = require('web3');
 const web3 = new Web3('https://bsc-dataseed1.binance.org:443');
 const axios = require('axios');
-const { performance } = require('perf_hooks');
+// const { performance } = require('perf_hooks');
+const cheerio = require('cheerio');
+const fs = require('fs');
 
 //insert your bot token here
 const bot = new Telegraf(process.env.BOT_TOKEN)
 
+
+
+
+
+//main bot
 bot.start((ctx) => ctx.reply('Hello can i help you?'))
 
 //create wallet command
@@ -20,7 +27,7 @@ bot.command('createwallet', (ctx) => {
 
 //get price token
 bot.command('token', async (ctx) => {
-    let startPerf = performance.now();
+
     const resultCtx = await ctx.update.message.text.split(' ');
     if (resultCtx[1] !== undefined) {
         if (resultCtx[1].substr(0, 2) === '0x' && resultCtx[1].length == 42) {
@@ -31,14 +38,17 @@ bot.command('token', async (ctx) => {
             axios(config)
                 .then(async response => {
                     console.log(response.data);
-                    await ctx.reply(`${response.data.data.name}  (${response.data.data.symbol})  \nPrice : $${response.data.data.price} \nPrice in BNB : ${response.data.data.price_BNB} bnb`);
 
-                    let endPerf = performance.now();
-                    await ctx.reply(Math.floor(endPerf - startPerf) / 1000 + 's')
+                    if (resultCtx[2] !== undefined) {
+                        ctx.reply(`${response.data.data.name}  (${response.data.data.symbol})\n${resultCtx[2]} ${response.data.data.symbol} = $${Math.floor(response.data.data.price * resultCtx[2])}
+                        \nPrice : $${response.data.data.price} \nPrice in BNB : $${response.data.data.price_BNB}`)
+                    } else {
+                        await ctx.reply(`${response.data.data.name}  (${response.data.data.symbol})  \nPrice : $${response.data.data.price} \nPrice in BNB : $${response.data.data.price_BNB}`);
+                    }
                 })
                 .catch(error => {
                     console.log(error.message)
-                    if (error.message === 'Request failed with status code 404') {
+                    if (error.response.status === 404) {
                         ctx.reply('*Error* token not found in pancakeswap', { parse_mode: 'MarkdownV2' })
                     }
                 })
@@ -52,6 +62,8 @@ bot.command('token', async (ctx) => {
     }
     console.log(resultCtx)
 })
+
+
 
 
 //start bot
