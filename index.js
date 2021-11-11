@@ -63,7 +63,68 @@ bot.command('token', async (ctx) => {
     console.log(resultCtx)
 })
 
+//get balance wallet bsc
+bot.command('balance', async (ctx) => {
+    const senderText = ctx.update.message.text.split(' ');
+    const walletAddress = senderText[1];
+    if (await walletAddress !== undefined && walletAddress.substr(0, 2) === '0x' && await walletAddress.length == 42) {
+        axios.get('https://bscscan.com/address/' + walletAddress)
+            .then(async (response) => {
+                const $ = cheerio.load(response.data)
+                $('.list-custom-BEP-20').each(async (i, item) => {
+                    let addressToken = $('a', item).attr('href');
+                    let getAddress = addressToken.match(/0x[\a-fA-F0-9\?]{40}/g);
+                    let getBalance = $('a > div:nth-child(1) > span', item).text();
+                    let intBalance = getBalance.replace(/,/g, '').split(' ');
 
+                    await axios.get('https://api.pancakeswap.info/api/v2/tokens/' + getAddress[0])
+                        .then(async (response) => {
+                            const result = response.data.data;
+                            if (result.price != 0 && result.name != 'unknown') {
+                                parseFloat(result.price);
+                                parseFloat(intBalance[0]);
+                                // console.log(`${result.name} (${result.symbol})\n$${result.price}\n\nBalance : $${intBalance[0] * result.price}\n`)
+                                fs.writeFile(`result-${ctx.message.chat.id}.txt`, `${intBalance[0]} <a href="https://bscscan.com/token/${getAddress[0]}">${result.symbol}</a> [ $${(intBalance[0] * result.price).toFixed(4)} ]\n`, { flag: 'a+' }, err => { })
+                            } else {
+                                fs.writeFile(`result-${ctx.message.chat.id}.txt`, `${intBalance[0]} <a href="https://bscscan.com/token/${getAddress[0]}">${result.symbol}</a>\n`, { flag: 'a+' }, err => { })
+                            }
+                        })
+                        .catch(error => {
+                            if (error.response.status === 404) {
+                                console.log('LP Not Found in PCS');
+
+                            } else {
+                                console.log(error.message)
+                            }
+                        })
+                })
+                // console.log($('.list-custom-BEP-20').length);
+
+                // console.log($('.list-custom-BEP-20').html());
+            })
+            .catch((error) => {
+                console.log(error);
+            })
+    } else {
+        ctx.reply('address not valid')
+    }
+
+    if (await walletAddress !== undefined) {
+        setTimeout(async () => {
+            console.log('DONE')
+            const data = await fs.readFileSync(`result-${ctx.message.chat.id}.txt`, { encoding: 'utf8', flag: 'r' });
+            await ctx.reply(data, { parse_mode: 'HTML' })
+            await fs.unlinkSync(`./result-${ctx.message.chat.id}.txt`)
+        }, 5000)
+    }
+
+
+
+
+
+})
+
+//price watcher raydium
 
 
 //start bot
