@@ -125,6 +125,102 @@ bot.command('balance', async (ctx) => {
 })
 
 //price watcher raydium
+bot.command('dexlab', async (ctx) => {
+    const senderText = ctx.update.message.text.split(' ');
+    console.log(senderText)
+    let prices = [];
+    let marketId;
+    let namePair;
+
+    if (senderText[1] != undefined) {
+        const tokenPair = senderText[1].toUpperCase();
+        let firstResult = 0
+        let tokenName;
+        console.log(tokenPair)
+
+        const getPrice = async () => {
+            const config = {
+                url: 'https://v-api.dexlab.space/v2/markets/recent',
+                method: 'GET',
+                headers: {
+                    'authority': 'tv-backup-api.dexlab.space',
+                    'sec-ch-ua': '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
+                    'sec-ch-ua-mobile': '?0',
+                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36',
+                    'sec-ch-ua-platform': '"Windows"',
+                    'accept': '*/*',
+                    'origin': 'https://trade.dexlab.space',
+                    'sec-fetch-site': 'same-site',
+                    'sec-fetch-mode': 'cors',
+                    'sec-fetch-dest': 'empty',
+                    'referer': 'https://trade.dexlab.space/',
+                    'accept-language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7'
+                }
+            }
+
+
+            await axios(config)
+                .then(async (response) => {
+
+                    const data = response.data.data
+                    let result = await data.filter(x => x.market === tokenPair)
+                    if (result[0].market != undefined) {
+                        tokenName = result[0].market.split('/')
+                        if (firstResult != 1) {
+                            if (senderText[2] !== undefined) {
+                                ctx.reply('Started Monitoring ' + tokenPair)
+                                ctx.reply(`Market founded!\nMarket : ${result[0].market}\nClose Price : ${result[0].closePrice}\nPrice : ${result[0].price}\nChange Price : ${result[0].changePrice}\nMarket ID : ${result[0].marketAddress}\n\n${senderText[2]} ${tokenName[0]} = $${Number(senderText[2] * result[0].price)}`);
+                            } else {
+                                ctx.reply(`Market founded!\nMarket : ${result[0].market}\nClose Price : ${result[0].closePrice}\nPrice : ${result[0].price}\nChange Price : ${result[0].changePrice}\nMarket ID : ${result[0].marketAddress}\n`);
+                            }
+
+                            firstResult++
+                        }
+                        namePair = result[0].market;
+                        marketId = result[0].marketAddress;
+                        prices.push(result[0].price)
+                        return result[0].price;
+                    }
+                })
+                .catch((error) => {
+                    console.log(error.message)
+                })
+        }
+        await getPrice()
+        if (tokenPair == 'CANCEL' || namePair !== undefined) {
+            let callFunctionPrice = setInterval(() => {
+                getPrice();
+                if (prices[prices.length - 1] != prices[prices.length - 2] && senderText[2]) {
+                    ctx.reply(`<a href="https://trade.dexlab.space/#/market/${marketId}">${namePair}</a>\nPrice changed! <b>${prices[prices.length - 1]}</b>\n\ ${senderText[2]} ${tokenName[0]} = $${Number(senderText[2] * prices[prices.length - 1])}`, { 'parse_mode': 'HTML', disable_web_page_preview: true });
+                } else if (prices[prices.length - 1] != prices[prices.length - 2]) {
+                    ctx.reply(`<a href="https://trade.dexlab.space/#/market/${marketId}">${namePair}</a>\nPrice changed! <b>${prices[prices.length - 1]}</b>`, { 'parse_mode': 'HTML', disable_web_page_preview: true });
+                }
+                if (tokenPair == 'CANCEL') {
+                    clearInterval(callFunctionPrice);
+                    ctx.reply('Price alert canceled')
+                }
+                //  else {
+                //     console.log('Masih ' + prices[prices.length - 1])
+                // }
+            }, 30000)
+        }
+        else {
+            ctx.reply('Market not found')
+        }
+
+        // if (tokenPair == 'CANCEL') {
+        //     let stopJob = cron.scheduleJob['dexlabHayyuk'];
+        //     stopJob.stop();
+        //     ctx.reply('Price alert canceled')
+        // }
+
+
+    } else {
+        ctx.reply('Invalid format\nExample `/dexlab sol/usdc`', { 'parse_mode': 'MarkdownV2' })
+    }
+
+
+})
 
 
 //start bot
