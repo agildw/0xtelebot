@@ -263,7 +263,7 @@ bot.command('sol', async (ctx) => {
                     }
 
                 }
-                sendText += '---\n'
+                // sendText += '---\n'
 
 
                 indexResult++;
