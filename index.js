@@ -225,65 +225,77 @@ bot.command('dexlab', async (ctx) => {
 bot.command('sol', async (ctx) => {
     const senderText = ctx.update.message.text.split(' ');
     let solWallet = senderText[1]
-    axios({
-        url: `https://api.solscan.io/account/tokens?address=${solWallet}&price=1`,
-        method: 'GET',
-        headers: {
-            'authority': 'api.solscan.io',
-            'accept': 'application/json, text/plain, */*',
-            'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
-            'origin': 'https://solscan.io',
-            'sec-fetch-site': 'same-site',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-dest': 'empty',
-            'referer': 'https://solscan.io/',
-            'accept-language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
-            'if-none-match': 'W/"1ec5-qeEAYZxDqmHsk/CbA96p2P6ubmA"'
-        }
-    })
-        .then((response) => {
-            const result = response.data.data;
-            // console.log(response.data.data)
-            let sendText = `[${solWallet}](https://solscan.io/account/${solWallet})\nFounded *${result.length}* Token\n\n`;
-            let indexResult = 0;
-            result.forEach((element, index) => {
-                sendText += element.tokenAmount.uiAmount + ' ';
-                if (element.tokenName) {
-                    sendText += element.tokenName;
-                } else {
-                    sendText += `[${element.tokenAddress}](https://solscan.io/account/${element.tokenAccount})\n`;
+    if (solWallet) {
+        axios({
+            url: `https://api.solscan.io/account/tokens?address=${solWallet}&price=1`,
+            method: 'GET',
+            headers: {
+                'authority': 'api.solscan.io',
+                'accept': 'application/json, text/plain, */*',
+                'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
+                'origin': 'https://solscan.io',
+                'sec-fetch-site': 'same-site',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-dest': 'empty',
+                'referer': 'https://solscan.io/',
+                'accept-language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+                'if-none-match': 'W/"1ec5-qeEAYZxDqmHsk/CbA96p2P6ubmA"'
+            }
+        })
+            .then((response) => {
+                if (response.data.message) {
+                    ctx.reply(response.data.message)
                 }
+                // console.log(response.data.data)
 
-                if (element.tokenSymbol) {
-                    if (element.priceUsdt) {
-                        sendText += ` ([${element.tokenSymbol}](https://solscan.io/account/${element.tokenAccount}))`
-                        sendText += ` ~ $${element.priceUsdt * element.tokenAmount.uiAmount}\n`
+                const result = response.data.data;
+                // const result = response.data.data;
+                console.log(result)
+                let sendText = `[${solWallet}](https://solscan.io/account/${solWallet})\nFounded *${result.length}* Token\n\n`;
+                let indexResult = 0;
+                result.forEach((element, index) => {
+                    sendText += element.tokenAmount.uiAmount + ' ';
+                    if (element.tokenName) {
+                        sendText += element.tokenName;
                     } else {
-                        sendText += ` ([${element.tokenSymbol}](https://solscan.io/account/${element.tokenAccount}))\n`
+                        sendText += `[${element.tokenAddress}](https://solscan.io/account/${element.tokenAccount})\n`;
                     }
 
+                    if (element.tokenSymbol) {
+                        if (element.priceUsdt) {
+                            sendText += ` ([${element.tokenSymbol}](https://solscan.io/account/${element.tokenAccount}))`
+                            sendText += ` ~ $${element.priceUsdt * element.tokenAmount.uiAmount}\n`
+                        } else {
+                            sendText += ` ([${element.tokenSymbol}](https://solscan.io/account/${element.tokenAccount}))\n`
+                        }
+
+                    }
+                    // sendText += '---\n'
+
+
+                    indexResult++;
+                });
+                if (result.length == indexResult) {
+                    // ctx.reply(`Ada ${result.length} Token`)
+                    ctx.reply(sendText, { parse_mode: 'Markdown', disable_web_page_preview: true })
+                } else {
+                    ctx.reply('not found')
+                    console.log(indexResult)
                 }
-                // sendText += '---\n'
 
+            })
+            .catch((error) => {
+                if (error.data !== undefined) {
+                    ctx.reply(error.data.message)
+                } else {
+                    console.log(error)
+                }
 
-                indexResult++;
-            });
-            if (result.length == indexResult) {
-                // ctx.reply(`Ada ${result.length} Token`)
-                ctx.reply(sendText, { parse_mode: 'Markdown', disable_web_page_preview: true })
-            } else {
-                ctx.reply('not found')
-                console.log(indexResult)
+            })
+    } else {
+        ctx.reply('Invalid command\n`/sol youraddress`', { parse_mode: 'Markdown' })
+    }
 
-            }
-
-        })
-        .catch((error) => {
-            if (error.data !== undefined) {
-                ctx.reply(error.data.message)
-            }
-
-        })
 })
 
 
