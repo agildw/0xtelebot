@@ -222,10 +222,59 @@ bot.command('dexlab', async (ctx) => {
 
 })
 
+bot.command('sol', async (ctx) => {
+    const senderText = ctx.update.message.text.split(' ');
+    let solWallet = senderText[1]
+    axios({
+        url: `https://api.solscan.io/account/tokens?address=${solWallet}&price=1`,
+        method: 'GET',
+        headers: {
+            'authority': 'api.solscan.io',
+            'accept': 'application/json, text/plain, */*',
+            'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
+            'origin': 'https://solscan.io',
+            'sec-fetch-site': 'same-site',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-dest': 'empty',
+            'referer': 'https://solscan.io/',
+            'accept-language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+            'if-none-match': 'W/"1ec5-qeEAYZxDqmHsk/CbA96p2P6ubmA"'
+        }
+    })
+        .then((response) => {
+            const result = response.data.data;
+            // console.log(response.data.data)
+            let sendText = `Founded ${result.length} Token`;
+            let indexResult = 0;
+            result.forEach((element, index) => {
+                sendText += ${ element.tokenName }
+                indexResult++;
+            });
+            if (result.length == indexResult) {
+                // ctx.reply(`Ada ${result.length} Token`)
+                ctx.reply(sendText)
+            } else {
+                ctx.reply('Ga nemu')
+                console.log(indexResult)
+
+            }
+
+        })
+        .catch((error) => {
+            if (error.data !== undefined) {
+                ctx.reply(error.data.message)
+            }
+
+        })
+})
+
 
 //start bot
 bot.launch()
-console.log('Running')
+let today = new Date();
+let time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+let date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate()
+console.log('Running', date, time)
 
 
 process.once('SIGINT', () => bot.stop('SIGINT'));
