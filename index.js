@@ -244,10 +244,20 @@ bot.command('sol', async (ctx) => {
         .then((response) => {
             const result = response.data.data;
             // console.log(response.data.data)
-            let sendText = `Founded ${result.length} Token`;
+            let sendText = `Founded ${result.length} Token\n\n`;
             let indexResult = 0;
             result.forEach((element, index) => {
-                sendText += ${ element.tokenName }
+                sendText += element.tokenAmount.uiAmount + ' ';
+                if (element.tokenName) {
+                    sendText += element.tokenName;
+                } else {
+                    sendText += element.tokenAddress + '\n';
+                }
+
+                if (element.tokenSymbol) {
+                    sendText += ` (${element.tokenSymbol})\n`
+                }
+
                 indexResult++;
             });
             if (result.length == indexResult) {
