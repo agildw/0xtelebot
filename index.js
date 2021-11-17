@@ -244,27 +244,35 @@ bot.command('sol', async (ctx) => {
         .then((response) => {
             const result = response.data.data;
             // console.log(response.data.data)
-            let sendText = `Founded ${result.length} Token\n\n`;
+            let sendText = `[${solWallet}](https://solscan.io/account/${solWallet})\nFounded *${result.length}* Token\n\n`;
             let indexResult = 0;
             result.forEach((element, index) => {
                 sendText += element.tokenAmount.uiAmount + ' ';
                 if (element.tokenName) {
                     sendText += element.tokenName;
                 } else {
-                    sendText += element.tokenAddress + '\n';
+                    sendText += `[${element.tokenAddress}](https://solscan.io/account/${element.tokenAccount})\n`;
                 }
 
                 if (element.tokenSymbol) {
-                    sendText += ` (${element.tokenSymbol})\n`
+                    if (element.priceUsdt) {
+                        sendText += ` ([${element.tokenSymbol}](https://solscan.io/account/${element.tokenAccount}))`
+                        sendText += ` ~ $${element.priceUsdt * element.tokenAmount.uiAmount}\n`
+                    } else {
+                        sendText += ` ([${element.tokenSymbol}](https://solscan.io/account/${element.tokenAccount}))\n`
+                    }
+
                 }
+                sendText += '---\n'
+
 
                 indexResult++;
             });
             if (result.length == indexResult) {
                 // ctx.reply(`Ada ${result.length} Token`)
-                ctx.reply(sendText)
+                ctx.reply(sendText, { parse_mode: 'Markdown', disable_web_page_preview: true })
             } else {
-                ctx.reply('Ga nemu')
+                ctx.reply('not found')
                 console.log(indexResult)
 
             }
