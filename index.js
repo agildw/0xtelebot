@@ -322,7 +322,7 @@ bot.command('xrp', async (ctx) => {
         axios(config)
             .then(response => {
                 const result = response.data;
-                console.log(result)
+                // console.log(result)
                 let sendedText = `[${xrpWallet}](https://xrpscan.com/account/${xrpWallet})\nFounded *${result.length}* token\n\n`;
                 let indexText = 0;
 
