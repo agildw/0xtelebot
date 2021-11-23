@@ -249,6 +249,7 @@ bot.command('sol', async (ctx) => {
                 // console.log(response.data.data)
 
                 const result = response.data.data;
+
                 // const result = response.data.data;
                 console.log(result)
                 let sendText = `[${solWallet}](https://solscan.io/account/${solWallet})\nFounded *${result.length}* Token\n\n`;
@@ -298,7 +299,51 @@ bot.command('sol', async (ctx) => {
 
 })
 
+bot.command('xrp', async (ctx) => {
+    const senderText = ctx.update.message.text.split(' ');
+    let xrpWallet = senderText[1];
+    if (xrpWallet) {
+        const config = {
+            url: `https://api.xrpscan.com/api/v1/account/${xrpWallet}/assets`,
+            method: 'GET',
+            headers: {
+                'authority': 'api.xrpscan.com',
+                'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
+                'accept': '*/*',
+                'origin': 'https://xrpscan.com',
+                'sec-fetch-site': 'same-site',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-dest': 'empty',
+                'accept-language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+                'if-none-match': 'W/"2-l9Fw4VUO7kr8CvBlt4zaMCqXZ0w"'
+            }
+        }
 
+        axios(config)
+            .then(response => {
+                const result = response.data;
+                console.log(result)
+                let sendedText = `[${xrpWallet}](https://xrpscan.com/account/${xrpWallet})\nFounded *${result.length}* token\n\n`;
+                let indexText = 0;
+
+                result.forEach((element) => {
+                    let valueComma = element.value.replace('.', ',')
+
+                    sendedText += `${valueComma} [${element.currency}](https://xrpscan.com/account/${element.counterparty}) \n`
+                    indexText++
+
+                });
+                if (indexText === result.length) {
+                    ctx.reply(sendedText, { parse_mode: 'MarkdownV2', disable_web_page_preview: true })
+                }
+            })
+            .catch(error => {
+
+                ctx.reply('Something went wrong');
+                console.log(error.message);
+            })
+    }
+})
 //start bot
 bot.launch()
 let today = new Date();
